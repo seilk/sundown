@@ -59,7 +59,7 @@ private final class StatusCoordinator: NSObject {
         popover.contentSize = NSSize(width: 380, height: 640)
         popover.contentViewController = NSHostingController(
             rootView: MenuPanelView(model: model)
-                .frame(width: 360)
+                .frame(width: 360, height: 620, alignment: .top)
                 .padding(10)
                 .background(UIStyle.panelBackground)
         )
@@ -235,6 +235,7 @@ private struct MenuPanelView: View {
                     )
                 }
             }
+            .frame(height: 285, alignment: .top)
             .padding(14)
             .background(UIStyle.heroBackground)
             .overlay(
@@ -252,7 +253,7 @@ private struct MenuPanelView: View {
 
                 if model.hasStartedSundown {
                     RitualDonutView(
-                        workedMinutes: model.workedMinutesToday,
+                        workedSeconds: model.trackedWorkSecondsTotal,
                         limitMinutes: model.currentLimitMinutes
                     )
                         .frame(maxWidth: .infinity)
@@ -260,8 +261,10 @@ private struct MenuPanelView: View {
                     Text("Complete onboarding in Settings to start ritual tracking.")
                         .font(.caption)
                         .foregroundStyle(UIStyle.subtleText)
+                    Spacer(minLength: 0)
                 }
             }
+            .frame(height: 315, alignment: .top)
             .padding(12)
             .background(UIStyle.cardBackground)
             .overlay(
@@ -269,7 +272,10 @@ private struct MenuPanelView: View {
                     .stroke(Color.white.opacity(0.3), lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
 

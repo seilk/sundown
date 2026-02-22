@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct RitualDonutView: View {
-    let workedMinutes: Int
+    let workedSeconds: Int
     let limitMinutes: Int
 
     var body: some View {
@@ -45,24 +45,26 @@ struct RitualDonutView: View {
     }
 
     private var progressToLimit: Double {
+        let limitSeconds = max(1, limitMinutes * 60)
         guard limitMinutes > 0 else {
             return 0
         }
 
-        return min(Double(workedMinutes) / Double(limitMinutes), 1.0)
+        return min(Double(workedSeconds) / Double(limitSeconds), 1.0)
     }
 
     private var overflowProgress: Double {
+        let limitSeconds = max(1, limitMinutes * 60)
         guard limitMinutes > 0 else {
             return 0
         }
 
-        let overflowMinutes = max(0, workedMinutes - limitMinutes)
-        return Double(overflowMinutes) / Double(limitMinutes)
+        let overflowSeconds = max(0, workedSeconds - limitSeconds)
+        return Double(overflowSeconds) / Double(limitSeconds)
     }
 
     private var workedHoursText: String {
-        String(format: "%.1fh", Double(workedMinutes) / 60.0)
+        String(format: "%.1fh", Double(workedSeconds) / 3600.0)
     }
 
     private var limitHoursText: String {
@@ -70,24 +72,24 @@ struct RitualDonutView: View {
     }
 
     private var deltaText: String {
-        let deltaMinutes = workedMinutes - limitMinutes
-        if deltaMinutes == 0 {
+        let deltaSeconds = workedSeconds - (limitMinutes * 60)
+        if abs(deltaSeconds) < 60 {
             return "On target"
         }
 
-        let sign = deltaMinutes > 0 ? "+" : "-"
-        let direction = deltaMinutes > 0 ? "over" : "under"
-        let hours = Double(abs(deltaMinutes)) / 60.0
+        let sign = deltaSeconds > 0 ? "+" : "-"
+        let direction = deltaSeconds > 0 ? "over" : "under"
+        let hours = Double(abs(deltaSeconds)) / 3600.0
         return String(format: "%@%.1fh %@", sign, hours, direction)
     }
 
     private var deltaColor: Color {
-        let deltaMinutes = workedMinutes - limitMinutes
-        if deltaMinutes > 0 {
+        let deltaSeconds = workedSeconds - (limitMinutes * 60)
+        if deltaSeconds > 0 {
             return Color(red: 0.93, green: 0.20, blue: 0.18)
         }
 
-        if deltaMinutes < 0 {
+        if deltaSeconds < 0 {
             return Color(red: 0.12, green: 0.44, blue: 0.84)
         }
 

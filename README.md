@@ -1,51 +1,43 @@
 # Sundown
 
-Sundown is an open-source macOS menubar app for healthier work pacing.
+Lightweight macOS menubar app for keeping a daily worktime boundary.
 
-It helps people who tend to work without clear limits by making overwork visible without aggressive interruption.
+> Homebrew release: **Coming soon**.
 
-## Core idea
+<p align="center">
+  <img src="assets/intro_0.png" alt="Sundown intro 0" width="48%" />
+  <img src="assets/intro_1.png" alt="Sundown intro 1" width="48.1%" />
+</p>
 
-- Show remaining time in the menubar during the workday.
-- After limit is exceeded, show over-time in red and keep counting.
-- Keep optional notifications available, but not required.
-- Provide a simple daily ritual view with Work/Break/Idle split.
+## Install
 
-## Stack
+### Homebrew (coming soon)
 
-- macOS app: SwiftUI + AppKit
-- Local data: UserDefaults + JSON
-- License: MIT
+```bash
+brew install --cask sundown
+```
 
-## Product status
+### Build from source
 
-This repository currently contains planning docs for MVP setup.
+```bash
+swift run SundownApp
+```
 
-## Development mode
+## Usage
 
-- Implementation follows strict TDD.
-- Features are shipped one step at a time.
-- After each feature increment, a user checkpoint is required before the next step.
-- Prototype testing is expected during development, not only after MVP completion.
+- Left click menubar icon: open dashboard.
+- Right click menubar icon: open settings or quit.
+- Start session, pause/resume with toggle, reset when needed.
 
-## OpenCode skills setup
+## Validate
 
-- External skill packs are installed in `./.skills/`.
-- Workspace config is in `opencode.json`.
-- Configured skill paths:
-  - `./.skills/agent-skills/skills`
-  - `./.skills/anthropic-skills/skills`
-  - `./.claude/skills`
-- Restart OpenCode session to reload skill sources.
+```bash
+swift test
+swift build
+```
 
-See:
+## Docs
 
-- `PRD.md`
-- `ARCHITECTURE.md`
-- `RULES.md`
-- `DEFAULTS.md`
-- `UX_FLOW.md`
-- `ROADMAP.md`
-- `RELEASE.md`
-- `TDD_WORKFLOW.md`
-- `PROTOTYPE_TESTING.md`
+- `docs/PRD.md`
+- `docs/ARCHITECTURE.md`
+- `docs/ROADMAP.md`

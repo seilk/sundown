@@ -15,7 +15,13 @@ public final class UserNotificationCenterService: NotificationService {
 
     public func requestAuthorizationIfNeeded() {
         let center = centerProvider()
-        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        center.getNotificationSettings { settings in
+            guard settings.authorizationStatus == .notDetermined else {
+                return
+            }
+
+            center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        }
     }
 
     public func sendOverLimitNotification(message: String) {

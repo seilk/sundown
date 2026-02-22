@@ -11,7 +11,7 @@ func load_whenNothingSaved_thenReturnsNilForAllFields() {
 
     #expect(settings.dailyLimitMinutes == nil)
     #expect(settings.dayResetMinutesFromMidnight == nil)
-    #expect(settings.notificationsEnabled == nil)
+    #expect(settings.notificationsEnabled == false)
     #expect(settings.idleThresholdMinutes == nil)
     #expect(settings.overLimitReminderMinutes == nil)
     #expect(settings.menuBarDisplayModeRawValue == nil)
@@ -66,7 +66,7 @@ func save_whenFieldIsNil_thenClearsStoredValue() {
     let loaded = store.load()
     #expect(loaded.dailyLimitMinutes == nil)
     #expect(loaded.dayResetMinutesFromMidnight == nil)
-    #expect(loaded.notificationsEnabled == nil)
+    #expect(loaded.notificationsEnabled == false)
     #expect(loaded.idleThresholdMinutes == nil)
     #expect(loaded.overLimitReminderMinutes == nil)
     #expect(loaded.menuBarDisplayModeRawValue == nil)

@@ -50,7 +50,7 @@ public final class UserDefaultsSettingsStore: SettingsStore {
         PersistedSettings(
             dailyLimitMinutes: intValue(forKey: Keys.dailyLimitMinutes),
             dayResetMinutesFromMidnight: intValue(forKey: Keys.dayResetMinutes),
-            notificationsEnabled: boolValue(forKey: Keys.notificationsEnabled),
+            notificationsEnabled: boolValue(forKey: Keys.notificationsEnabled) ?? false,
             idleThresholdMinutes: intValue(forKey: Keys.idleThresholdMinutes),
             overLimitReminderMinutes: intValue(forKey: Keys.overLimitReminderMinutes),
             menuBarDisplayModeRawValue: intValue(forKey: Keys.menuBarDisplayModeRawValue)

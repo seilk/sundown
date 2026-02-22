@@ -235,10 +235,10 @@ private struct MenuPanelView: View {
                         // Controls
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("DAILY LIMIT")
-                                    .font(.system(size: 9, weight: .bold, design: .rounded))
-                                    .foregroundStyle(UIStyle.tertiaryText)
-                                    .tracking(0.5)
+                                    Text("WORK LIMIT")
+                                        .font(.system(size: 9, weight: .bold, design: .rounded))
+                                        .foregroundStyle(UIStyle.tertiaryText)
+                                        .tracking(0.5)
                                 
                                 Text(model.limitLabel)
                                     .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -467,16 +467,17 @@ private struct SettingsWindowView: View {
                                         .font(.system(size: 10, weight: .bold, design: .rounded))
                                         .foregroundStyle(UIStyle.tertiaryText)
                                     Spacer()
-                                    Text("\(model.persistedSettings.idleThresholdMinutes ?? 5) minutes")
-                                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                                        .foregroundStyle(UIStyle.primaryText)
+                                    Stepper(value: Binding(
+                                        get: { model.persistedSettings.idleThresholdMinutes ?? 5 },
+                                        set: { model.setIdleThreshold(max(1, $0)) }
+                                    ), in: 1...30, step: 1) {
+                                        Text("\(model.persistedSettings.idleThresholdMinutes ?? 5) min")
+                                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                            .monospacedDigit()
+                                            .foregroundStyle(UIStyle.primaryText)
+                                    }
+                                    .fixedSize()
                                 }
-                                
-                                Stepper("", value: Binding(
-                                    get: { model.persistedSettings.idleThresholdMinutes ?? 5 },
-                                    set: { model.setIdleThreshold(max(1, $0)) }
-                                ), in: 1...30, step: 1)
-                                .labelsHidden()
                                 
                                 Text("Sundown will automatically pause when no activity is detected for this duration.")
                                     .font(.caption)
@@ -563,16 +564,17 @@ private struct SettingsWindowView: View {
                                             .font(.system(size: 10, weight: .bold, design: .rounded))
                                             .foregroundStyle(UIStyle.tertiaryText)
                                         Spacer()
-                                        Text("\(model.reminderInterval) minutes")
-                                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                                            .foregroundStyle(UIStyle.primaryText)
+                                        Stepper(value: Binding(
+                                            get: { model.persistedSettings.overLimitReminderMinutes ?? 30 },
+                                            set: { model.setReminderInterval(max(1, $0)) }
+                                        ), in: 1...120, step: 5) {
+                                            Text("\(model.reminderInterval) min")
+                                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                                .monospacedDigit()
+                                                .foregroundStyle(UIStyle.primaryText)
+                                        }
+                                        .fixedSize()
                                     }
-                                    
-                                    Stepper("", value: Binding(
-                                        get: { model.persistedSettings.overLimitReminderMinutes ?? 30 },
-                                        set: { model.setReminderInterval(max(1, $0)) }
-                                    ), in: 1...120, step: 5)
-                                    .labelsHidden()
                                 }
                                 
                                 Divider()
@@ -657,6 +659,7 @@ private enum SettingsTab {
 
 private struct LightSwitchPauseToggle: View {
     @Binding var isPaused: Bool
+    @State private var isHovering: Bool = false
 
     private let trackWidth: CGFloat = 64
     private let trackHeight: CGFloat = 34
@@ -698,28 +701,56 @@ private struct LightSwitchPauseToggle: View {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(UIStyle.cardBackground)
+                    .fill(isHovering ? UIStyle.cardBackground.opacity(0.8) : UIStyle.cardBackground)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(UIStyle.borderSubtle, lineWidth: 1)
+                    .stroke(isHovering ? UIStyle.borderSubtle.opacity(0.8) : UIStyle.borderSubtle, lineWidth: 1)
             )
-            .shadow(color: UIStyle.shadowSubtle, radius: 8, x: 0, y: 2)
+            .shadow(color: UIStyle.shadowSubtle.opacity(isHovering ? 0.8 : 0.5), radius: isHovering ? 12 : 8, x: 0, y: isHovering ? 4 : 2)
+            .scaleEffect(isHovering ? 1.01 : 1.0)
         }
         .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovering = hovering
+            }
+        }
     }
 }
 
 private struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(UIStyle.activeBlue)
-            )
-            .foregroundStyle(Color.white)
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
-            .shadow(color: UIStyle.activeBlue.opacity(0.3), radius: 8, x: 0, y: 4)
+        PrimaryButtonView(configuration: configuration)
+    }
+
+    private struct PrimaryButtonView: View {
+        let configuration: Configuration
+        @State private var isHovering: Bool = false
+
+        var body: some View {
+            configuration.label
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(UIStyle.activeBlue)
+                        .brightness(isHovering ? 0.08 : 0.0)
+                )
+                .foregroundStyle(Color.white)
+                .opacity(configuration.isPressed ? 0.9 : 1.0)
+                .scaleEffect(isHovering && !configuration.isPressed ? 1.02 : (configuration.isPressed ? 0.98 : 1.0))
+                .shadow(
+                    color: UIStyle.activeBlue.opacity(isHovering ? 0.5 : 0.3),
+                    radius: isHovering ? 12 : 8,
+                    x: 0,
+                    y: isHovering ? 6 : 4
+                )
+                .onHover { hovering in
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        isHovering = hovering
+                    }
+                }
+                .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+        }
     }
 }
 
@@ -727,22 +758,67 @@ private struct HeroGlassButtonStyle: ButtonStyle {
     var prominent: Bool = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 12, weight: .semibold, design: .rounded))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(prominent ? Color.white.opacity(0.92) : Color.white.opacity(0.72))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.white.opacity(0.45), lineWidth: 1)
-            )
-            .foregroundStyle(prominent ? UIStyle.primaryText : UIStyle.subtleText)
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
-            .brightness(configuration.isPressed ? -0.03 : 0.0)
-            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+        HeroGlassButtonView(configuration: configuration, prominent: prominent)
+    }
+
+    private struct HeroGlassButtonView: View {
+        let configuration: Configuration
+        let prominent: Bool
+        @State private var isHovering: Bool = false
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(backgroundColor)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(borderColor, lineWidth: isHovering ? 1.5 : 1)
+                )
+                .foregroundStyle(foregroundColor)
+                .opacity(configuration.isPressed ? 0.9 : 1.0)
+                .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+                .shadow(
+                    color: isHovering ? UIStyle.activeBlue.opacity(0.26) : Color.clear,
+                    radius: isHovering ? 8 : 0,
+                    x: 0,
+                    y: isHovering ? 3 : 0
+                )
+                .onHover { hovering in
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        isHovering = hovering
+                    }
+                }
+                .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+        }
+
+        private var backgroundColor: Color {
+            if prominent {
+                return isHovering ? UIStyle.activeBlue.opacity(0.14) : Color.white.opacity(0.92)
+            } else {
+                return isHovering ? Color.white.opacity(0.96) : Color.white.opacity(0.72)
+            }
+        }
+
+        private var borderColor: Color {
+            if isHovering {
+                return UIStyle.activeBlue.opacity(0.75)
+            } else {
+                return Color.white.opacity(0.45)
+            }
+        }
+
+        private var foregroundColor: Color {
+            if prominent {
+                return isHovering ? UIStyle.activeBlue : UIStyle.primaryText
+            }
+
+            return isHovering ? UIStyle.activeBlue : UIStyle.subtleText
+        }
     }
 }
 
@@ -1142,12 +1218,19 @@ private final class SundownViewModel: ObservableObject {
     }
 
     func setNotificationsEnabled(_ enabled: Bool) {
+        let current = persistedSettings.notificationsEnabled ?? false
+        guard current != enabled else {
+            return
+        }
+
         updateSettings { settings in
             settings.notificationsEnabled = enabled
         }
 
         if enabled {
-            notificationService.requestAuthorizationIfNeeded()
+            DispatchQueue.main.async { [notificationService] in
+                notificationService.requestAuthorizationIfNeeded()
+            }
         }
     }
 

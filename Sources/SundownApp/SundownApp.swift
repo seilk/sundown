@@ -871,6 +871,8 @@ private final class SundownViewModel: ObservableObject {
     @Published var selectedQAPreset: QAPreset = .overworkNow
     @Published var qaStatusMessage: String?
 
+    private let defaultDayResetMinutes = 240
+
     init(
         notificationService: NotificationService = UserNotificationCenterService(),
         settingsStore: UserDefaultsSettingsStore = UserDefaultsSettingsStore(),
@@ -880,6 +882,8 @@ private final class SundownViewModel: ObservableObject {
         self.settingsStore = settingsStore
         self.dayRecordStore = dayRecordStore
         self.persistedSettings = settingsStore.load()
+
+        normalizeOnboardingDefaultsIfNeeded()
 
         setupHeartbeat()
         setupActivityMonitors()
@@ -1182,6 +1186,9 @@ private final class SundownViewModel: ObservableObject {
     func setDailyLimit(_ minutes: Int) {
         updateSettings { settings in
             settings.dailyLimitMinutes = minutes
+            if settings.dayResetMinutesFromMidnight == nil {
+                settings.dayResetMinutesFromMidnight = defaultDayResetMinutes
+            }
         }
     }
 
@@ -1423,6 +1430,17 @@ private final class SundownViewModel: ObservableObject {
     private func reloadSettings() {
         persistedSettings = settingsStore.load()
         objectWillChange.send()
+    }
+
+    private func normalizeOnboardingDefaultsIfNeeded() {
+        guard persistedSettings.dailyLimitMinutes != nil,
+              persistedSettings.dayResetMinutesFromMidnight == nil else {
+            return
+        }
+
+        updateSettings { settings in
+            settings.dayResetMinutesFromMidnight = defaultDayResetMinutes
+        }
     }
 
     private func updateSettings(_ update: (inout MutableSettings) -> Void) {

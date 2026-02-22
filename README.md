@@ -2,7 +2,7 @@
 
 Lightweight macOS menubar app for keeping a daily worktime boundary.
 
-> Homebrew release: **Coming soon**.
+> Homebrew-ready release automation is now included in this repo.
 
 <p align="center">
   <img src="assets/intro_0.png" alt="Sundown intro 0" width="48%" />
@@ -11,11 +11,14 @@ Lightweight macOS menubar app for keeping a daily worktime boundary.
 
 ## Install
 
-### Homebrew (coming soon)
+### Homebrew
 
 ```bash
+brew tap seilk/sundown
 brew install --cask sundown
 ```
+
+Note: `seilk/homebrew-sundown` tap repository must exist and include `Casks/sundown.rb`.
 
 ### Build from source
 
@@ -34,6 +37,28 @@ swift run SundownApp
 ```bash
 swift test
 swift build
+```
+
+## Release for Homebrew
+
+On tag push, GitHub Actions now:
+
+1. runs tests,
+2. builds and bundles `Sundown.app`,
+3. creates `Sundown-<version>.zip`,
+4. calculates SHA-256,
+5. generates `dist/homebrew/Casks/sundown.rb`,
+6. uploads both files to the GitHub Release.
+
+Workflow file: `.github/workflows/release-homebrew.yml`
+
+Tap source template: `homebrew/Casks/sundown.rb.template`
+
+Local dry-run commands:
+
+```bash
+bash scripts/package-macos-app.sh 1.0.0
+bash scripts/render-homebrew-cask.sh 1.0.0 <sha256-from-previous-step>
 ```
 
 ## Docs

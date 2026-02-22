@@ -1,0 +1,22 @@
+cask "sundown" do
+  version "__VERSION__"
+  sha256 "__SHA256__"
+
+  url "https://github.com/seilk/sundown/releases/download/#{version}/Sundown-#{version}.zip",
+      verified: "github.com/seilk/sundown/"
+  name "Sundown"
+  desc "Lightweight macOS menubar app for daily worktime boundary"
+  homepage "https://github.com/seilk/sundown"
+
+  livecheck do
+    url :url
+    strategy :github_latest
+  end
+
+  app "Sundown.app"
+
+  zap trash: [
+    "~/Library/Application Support/Sundown",
+    "~/Library/Preferences/com.seilk.sundown.plist"
+  ]
+end

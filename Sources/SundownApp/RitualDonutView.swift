@@ -7,40 +7,49 @@ struct RitualDonutView: View {
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
+                // Background track
                 Circle()
-                    .stroke(Color.white.opacity(0.35), lineWidth: 18)
+                    .stroke(UIStyle.borderSubtle, lineWidth: 20)
 
+                // Progress arc
                 Circle()
                     .trim(from: 0, to: progressToLimit)
-                    .stroke(progressGradient, style: StrokeStyle(lineWidth: 18, lineCap: .round))
+                    .stroke(progressGradient, style: StrokeStyle(lineWidth: 20, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                    .shadow(color: progressColor.opacity(0.3), radius: 8, x: 0, y: 4)
 
+                // Overflow arc
                 if safeWorkedSeconds > limitSeconds {
                     Circle()
                         .trim(from: 0, to: overflowProgress)
-                        .stroke(Color.black.opacity(0.85), style: StrokeStyle(lineWidth: 18, lineCap: .round))
+                        .stroke(UIStyle.alertText, style: StrokeStyle(lineWidth: 20, lineCap: .round))
                         .rotationEffect(.degrees(-90))
+                        .shadow(color: UIStyle.alertText.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
 
-                VStack(spacing: 2) {
+                VStack(spacing: 0) {
                     Text("WORKTIME")
-                        .font(.system(size: 9, weight: .bold, design: .rounded))
-                        .foregroundStyle(subtleText)
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(UIStyle.tertiaryText)
+                        .padding(.bottom, 2)
 
                     Text(workedHoursText)
-                        .font(.system(size: 27, weight: .bold, design: .rounded))
-                        .foregroundStyle(primaryText)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(UIStyle.primaryText)
+                        .contentTransition(.numericText())
 
                     Text(deltaText)
-                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
                         .foregroundStyle(deltaColor)
+                        .padding(.top, 2)
                 }
             }
-            .frame(width: 156, height: 156)
+            .frame(width: 180, height: 180)
 
             Text("Target \(limitHoursText)")
-                .font(.caption)
-                .foregroundStyle(subtleText)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundStyle(UIStyle.secondaryText)
+                .padding(.top, 8)
         }
     }
 
@@ -76,31 +85,36 @@ struct RitualDonutView: View {
     private var deltaColor: Color {
         let deltaSeconds = safeWorkedSeconds - limitSeconds
         if deltaSeconds > 0 {
-            return Color(red: 0.93, green: 0.20, blue: 0.18)
+            return UIStyle.alertText
         }
 
         if deltaSeconds < 0 {
-            return Color(red: 0.12, green: 0.44, blue: 0.84)
+            return UIStyle.activeBlue
         }
 
-        return Color(red: 0.16, green: 0.72, blue: 0.34)
+        return UIStyle.successText
+    }
+
+    private var progressColor: Color {
+        let progress = Double(safeWorkedSeconds) / Double(limitSeconds)
+        if progress >= 1.0 {
+            return UIStyle.successText
+        } else if progress > 0.8 {
+            return Color(red: 1.0, green: 0.75, blue: 0.0) // Amber
+        } else {
+            return UIStyle.activeBlue
+        }
     }
 
     private var progressGradient: AngularGradient {
         AngularGradient(
             gradient: Gradient(colors: [
-                Color(red: 0.16, green: 0.72, blue: 0.34),
-                Color(red: 0.18, green: 0.47, blue: 0.93),
-                Color(red: 1.0, green: 0.62, blue: 0.10),
-                Color(red: 0.93, green: 0.20, blue: 0.18),
-                Color(red: 0.16, green: 0.72, blue: 0.34)
+                UIStyle.activeBlue,
+                Color(red: 0.0, green: 0.8, blue: 1.0), // Cyan
+                UIStyle.successText
             ]),
             center: .center
         )
-    }
-
-    private var primaryText: Color {
-        Color(red: 0.08, green: 0.12, blue: 0.10)
     }
 
     private var safeWorkedSeconds: Int {
@@ -110,8 +124,5 @@ struct RitualDonutView: View {
     private var limitSeconds: Int {
         max(1, limitMinutes * 60)
     }
-
-    private var subtleText: Color {
-        Color(red: 0.34, green: 0.40, blue: 0.36)
-    }
 }
+

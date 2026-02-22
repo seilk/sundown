@@ -168,114 +168,176 @@ private struct MenuPanelView: View {
     @ObservedObject var model: SundownViewModel
 
     var body: some View {
-        VStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("Sundown")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(UIStyle.subtleText)
-                    Spacer()
-                    Button("Reset") {
-                        model.resetSundownSession()
-                    }
-                    .buttonStyle(HeroGlassButtonStyle())
+        VStack(spacing: 0) {
+            // MARK: - Header
+            HStack {
+                Text("Sundown")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundStyle(UIStyle.secondaryText)
+                
+                Spacer()
+                
+                Button(action: { model.resetSundownSession() }) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(UIStyle.secondaryText)
                 }
+                .buttonStyle(HeroGlassButtonStyle())
+                .help("Reset Session")
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
 
-                if model.gateState == .allowed, model.hasStartedSundown, let worktimeState = model.worktimeState {
-                    Text(model.worktimeStateFormatter.displayText(for: worktimeState))
-                        .font(.system(size: 31, weight: .bold, design: .rounded))
-                        .foregroundStyle(model.worktimeStateFormatter.isOverLimit(worktimeState) ? UIStyle.alertText : UIStyle.primaryText)
-                } else if model.gateState == .allowed, model.hasStartedSundown, !model.isSundownActive {
-                    Text("Paused")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(UIStyle.primaryText)
-                } else {
-                    Text(model.menuTitle)
-                        .font(.system(size: 19, weight: .semibold, design: .rounded))
-                        .foregroundStyle(UIStyle.primaryText)
-                }
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 16) {
+                    
+                    // MARK: - Status Card
+                    VStack(alignment: .leading, spacing: 16) {
+                        if model.gateState == .allowed, model.hasStartedSundown, let worktimeState = model.worktimeState {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(model.worktimeStateFormatter.displayText(for: worktimeState))
+                                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                                    .monospacedDigit()
+                                    .foregroundStyle(model.worktimeStateFormatter.isOverLimit(worktimeState) ? UIStyle.alertText : UIStyle.primaryText)
+                                    .contentTransition(.numericText())
+                                
+                                Text(model.isSundownActive ? "Session Active" : "Session Paused")
+                                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                                    .foregroundStyle(model.isSundownActive ? UIStyle.successText : UIStyle.tertiaryText)
+                            }
+                        } else if model.gateState == .allowed, model.hasStartedSundown, !model.isSundownActive {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Paused")
+                                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                                    .foregroundStyle(UIStyle.secondaryText)
+                                
+                                Text("Session Paused")
+                                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                                    .foregroundStyle(UIStyle.tertiaryText)
+                            }
+                        } else {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(model.menuTitle)
+                                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(UIStyle.primaryText)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                
+                                Text("Session Not Started")
+                                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                                    .foregroundStyle(UIStyle.tertiaryText)
+                            }
+                        }
 
-                Text(model.hasStartedSundown ? (model.isSundownActive ? "Session Active" : "Session Paused") : "Session Not Started")
-                    .font(.caption)
-                    .foregroundStyle(UIStyle.subtleText)
+                        Divider()
+                            .background(UIStyle.borderSubtle)
 
-                HStack(spacing: 8) {
-                    Text("Worktime \(model.limitLabel)")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundStyle(UIStyle.subtleText)
+                        // Controls
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("DAILY LIMIT")
+                                    .font(.system(size: 9, weight: .bold, design: .rounded))
+                                    .foregroundStyle(UIStyle.tertiaryText)
+                                    .tracking(0.5)
+                                
+                                Text(model.limitLabel)
+                                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(UIStyle.secondaryText)
+                            }
+                            
+                            Spacer()
 
-                    Spacer()
-
-                    Button("-30m") {
-                        model.adjustDailyLimit(by: -30)
+                            HStack(spacing: 6) {
+                                Button("-30m") {
+                                    model.adjustDailyLimit(by: -30)
+                                }
+                                .buttonStyle(HeroGlassButtonStyle())
+                                
+                                Button("+30m") {
+                                    model.adjustDailyLimit(by: 30)
+                                }
+                                .buttonStyle(HeroGlassButtonStyle())
+                            }
+                        }
+                        
+                        if !model.hasStartedSundown {
+                            Button {
+                                model.startSundown()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "play.fill")
+                                    Text("Start Sundown")
+                                }
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(model.gateState != .allowed)
+                        } else {
+                            LightSwitchPauseToggle(
+                                isPaused: Binding(
+                                    get: { !model.isSundownActive },
+                                    set: { model.setPaused($0) }
+                                )
+                            )
+                        }
                     }
-                    .buttonStyle(HeroGlassButtonStyle())
+                    .padding(20)
+                    .background(UIStyle.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .shadow(color: UIStyle.shadowSubtle, radius: 10, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(UIStyle.borderSubtle, lineWidth: 1)
+                    )
 
-                    Button("+30m") {
-                        model.adjustDailyLimit(by: 30)
-                    }
-                    .buttonStyle(HeroGlassButtonStyle(prominent: true))
-                }
+                    // MARK: - Ritual Card
+                    VStack(alignment: .center, spacing: 16) {
+                        HStack {
+                            Text("TODAY'S RITUAL")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundStyle(UIStyle.tertiaryText)
+                                .tracking(0.5)
+                            Spacer()
+                        }
 
-                if !model.hasStartedSundown {
-                    Button {
-                        model.startSundown()
-                    } label: {
-                        Label("Start Sundown", systemImage: "play.fill")
+                        if model.hasStartedSundown {
+                            RitualDonutView(
+                                workedSeconds: model.trackedWorkSecondsTotal,
+                                limitMinutes: model.currentLimitMinutes
+                            )
+                            .frame(height: 200)
+                        } else {
+                            VStack(spacing: 12) {
+                                Image(systemName: "clock.badge.exclamationmark")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(UIStyle.tertiaryText.opacity(0.5))
+                                
+                                Text("Complete onboarding in Settings\nto start ritual tracking.")
+                                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                                    .foregroundStyle(UIStyle.tertiaryText)
+                                    .multilineTextAlignment(.center)
+                            }
                             .frame(maxWidth: .infinity)
+                            .frame(height: 180)
+                        }
                     }
-                    .buttonStyle(HeroGlassButtonStyle(prominent: true))
-                    .disabled(model.gateState != .allowed)
-                } else {
-                    LightSwitchPauseToggle(
-                        isPaused: Binding(
-                            get: { !model.isSundownActive },
-                            set: { model.setPaused($0) }
-                        )
+                    .padding(20)
+                    .background(UIStyle.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .shadow(color: UIStyle.shadowSubtle, radius: 10, x: 0, y: 4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(UIStyle.borderSubtle, lineWidth: 1)
                     )
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 20)
             }
-            .frame(height: 285, alignment: .top)
-            .padding(14)
-            .background(UIStyle.heroBackground)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.35), lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("Today Ritual")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        .foregroundStyle(UIStyle.subtleText)
-                }
-
-                if model.hasStartedSundown {
-                    RitualDonutView(
-                        workedSeconds: model.trackedWorkSecondsTotal,
-                        limitMinutes: model.currentLimitMinutes
-                    )
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Text("Complete onboarding in Settings to start ritual tracking.")
-                        .font(.caption)
-                        .foregroundStyle(UIStyle.subtleText)
-                    Spacer(minLength: 0)
-                }
-            }
-            .frame(height: 315, alignment: .top)
-            .padding(12)
-            .background(UIStyle.cardBackground)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-
-            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(UIStyle.panelBackground)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -288,53 +350,107 @@ private struct SettingsWindowView: View {
             ScrollView {
                 VStack(spacing: 10) {
                     SettingsCard(title: "Workday") {
-                        HStack(spacing: 8) {
-                            Button("6h") { model.setDailyLimit(360) }.buttonStyle(.bordered)
-                            Button("8h") { model.setDailyLimit(480) }.buttonStyle(.bordered)
-                            Button("10h") { model.setDailyLimit(600) }.buttonStyle(.bordered)
-                            Button("Clear") { model.clearOnboardingSettings() }.buttonStyle(.bordered)
-                        }
-
-                        HStack(spacing: 12) {
-                            Stepper(value: Binding(
-                                get: { model.dailyLimitHours },
-                                set: { model.setDailyLimitHours($0) }
-                            ), in: 0...23, step: 1) {
-                                Text("Hours: \(model.dailyLimitHours)")
+                        VStack(alignment: .leading, spacing: 16) {
+                            // Quick Presets
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("QUICK PRESETS")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundStyle(UIStyle.tertiaryText)
+                                
+                                HStack(spacing: 8) {
+                                    Button("6h") { model.setDailyLimit(360) }
+                                    Button("8h") { model.setDailyLimit(480) }
+                                    Button("10h") { model.setDailyLimit(600) }
+                                    Spacer()
+                                    Button("Clear") { model.clearOnboardingSettings() }
+                                        .foregroundStyle(UIStyle.alertText)
+                                }
+                                .buttonStyle(HeroGlassButtonStyle())
                             }
+                            
+                            Divider()
+                                .background(UIStyle.borderSubtle)
 
-                            Stepper(value: Binding(
-                                get: { model.dailyLimitRemainderMinutes },
-                                set: { model.setDailyLimitRemainderMinutes($0) }
-                            ), in: 0...59, step: 1) {
-                                Text("Minutes: \(model.dailyLimitRemainderMinutes)")
+                            // Manual Time Setting
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("DAILY LIMIT")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundStyle(UIStyle.tertiaryText)
+                                    Spacer()
+                                    Text(model.limitLabel)
+                                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(UIStyle.secondaryText)
+                                }
+
+                                HStack(spacing: 16) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Hours")
+                                            .font(.caption)
+                                            .foregroundStyle(UIStyle.tertiaryText)
+                                        Stepper(value: Binding(
+                                            get: { model.dailyLimitHours },
+                                            set: { model.setDailyLimitHours($0) }
+                                        ), in: 0...23, step: 1) {
+                                            Text("\(model.dailyLimitHours)")
+                                                .font(.system(.body, design: .rounded))
+                                                .monospacedDigit()
+                                        }
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Minutes")
+                                            .font(.caption)
+                                            .foregroundStyle(UIStyle.tertiaryText)
+                                        Stepper(value: Binding(
+                                            get: { model.dailyLimitRemainderMinutes },
+                                            set: { model.setDailyLimitRemainderMinutes($0) }
+                                        ), in: 0...59, step: 1) {
+                                            Text("\(model.dailyLimitRemainderMinutes)")
+                                                .font(.system(.body, design: .rounded))
+                                                .monospacedDigit()
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Divider()
+                                .background(UIStyle.borderSubtle)
+
+                            // Other Settings
+                            VStack(alignment: .leading, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("MENU BAR DISPLAY")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundStyle(UIStyle.tertiaryText)
+                                    
+                                    Picker("", selection: Binding(
+                                        get: { model.menuBarDisplayMode },
+                                        set: { model.setMenuBarDisplayMode($0) }
+                                    )) {
+                                        ForEach(MenuBarDisplayMode.allCases, id: \.self) { mode in
+                                            Text(mode.label).tag(mode)
+                                        }
+                                    }
+                                    .pickerStyle(.segmented)
+                                    .labelsHidden()
+                                }
+                                
+                                HStack {
+                                    Text("Day Reset Time")
+                                        .foregroundStyle(UIStyle.secondaryText)
+                                    Spacer()
+                                    Stepper(value: Binding(
+                                        get: { model.persistedSettings.dayResetMinutesFromMidnight ?? 240 },
+                                        set: { model.setResetTime($0) }
+                                    ), in: 0...1_439, step: 15) {
+                                        Text(model.resetLabel)
+                                            .monospacedDigit()
+                                            .foregroundStyle(UIStyle.primaryText)
+                                    }
+                                }
                             }
                         }
-
-                        Text("Daily Limit: \(model.limitLabel)")
-                            .font(.caption)
-                            .foregroundStyle(UIStyle.subtleText)
-
-                        Picker("Menu Bar Display", selection: Binding(
-                            get: { model.menuBarDisplayMode },
-                            set: { model.setMenuBarDisplayMode($0) }
-                        )) {
-                            ForEach(MenuBarDisplayMode.allCases, id: \.self) { mode in
-                                Text(mode.label).tag(mode)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-
-                        Stepper(value: Binding(
-                            get: { model.persistedSettings.dayResetMinutesFromMidnight ?? 240 },
-                            set: { model.setResetTime($0) }
-                        ), in: 0...1_439, step: 15) {
-                            Text("Reset Time: \(model.resetLabel)")
-                        }
-
-                        Text("Overworked today: \(model.todayOverworkLabel)")
-                            .font(.caption)
-                            .foregroundStyle(model.todayOverworkMinutes > 0 ? UIStyle.alertText : UIStyle.subtleText)
                     }
                 }
             }
@@ -344,39 +460,74 @@ private struct SettingsWindowView: View {
             ScrollView {
                 VStack(spacing: 10) {
                     SettingsCard(title: "Behavior") {
-                        Stepper(value: Binding(
-                            get: { model.persistedSettings.idleThresholdMinutes ?? 5 },
-                            set: { model.setIdleThreshold(max(1, $0)) }
-                        ), in: 1...30, step: 1) {
-                            Text("Idle Threshold: \(model.persistedSettings.idleThresholdMinutes ?? 5)m")
+                        VStack(alignment: .leading, spacing: 16) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("IDLE DETECTION")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundStyle(UIStyle.tertiaryText)
+                                    Spacer()
+                                    Text("\(model.persistedSettings.idleThresholdMinutes ?? 5) minutes")
+                                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                                        .foregroundStyle(UIStyle.primaryText)
+                                }
+                                
+                                Stepper("", value: Binding(
+                                    get: { model.persistedSettings.idleThresholdMinutes ?? 5 },
+                                    set: { model.setIdleThreshold(max(1, $0)) }
+                                ), in: 1...30, step: 1)
+                                .labelsHidden()
+                                
+                                Text("Sundown will automatically pause when no activity is detected for this duration.")
+                                    .font(.caption)
+                                    .foregroundStyle(UIStyle.tertiaryText)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            
+                            Divider()
+                                .background(UIStyle.borderSubtle)
+                                
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("DEBUG TOOLS")
+                                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                                    .foregroundStyle(UIStyle.tertiaryText)
+                                
+                                HStack(spacing: 8) {
+                                    Button("Set Active Input") { model.setActiveInput() }
+                                    Button("Simulate Idle") { model.simulateIdleThresholdCrossing() }
+                                }
+                                .buttonStyle(HeroGlassButtonStyle())
+                                
+                                HStack {
+                                    Text("Current State:")
+                                        .foregroundStyle(UIStyle.secondaryText)
+                                    Text(model.activityLabel)
+                                        .foregroundStyle(UIStyle.primaryText)
+                                        .fontWeight(.medium)
+                                }
+                                .font(.caption)
+                                .padding(.top, 4)
+                            }
                         }
-
-                        HStack(spacing: 8) {
-                            Button("Set Active Input") { model.setActiveInput() }
-                                .buttonStyle(.bordered)
-                            Button("Simulate Idle") { model.simulateIdleThresholdCrossing() }
-                                .buttonStyle(.bordered)
-                        }
-
-                        Text("Current Activity: \(model.activityLabel)")
-                            .font(.caption)
-                            .foregroundStyle(UIStyle.subtleText)
                     }
 
                     SettingsCard(title: "Scenario") {
-                        Picker("Scenario", selection: Binding(
-                            get: { model.prototypeScenario },
-                            set: { model.setScenario($0) }
-                        )) {
-                            ForEach(PrototypeScenario.allCases, id: \.self) { scenario in
-                                Text(scenario.label).tag(scenario)
+                        VStack(alignment: .leading, spacing: 12) {
+                            Picker("Scenario", selection: Binding(
+                                get: { model.prototypeScenario },
+                                set: { model.setScenario($0) }
+                            )) {
+                                ForEach(PrototypeScenario.allCases, id: \.self) { scenario in
+                                    Text(scenario.label).tag(scenario)
+                                }
                             }
-                        }
-                        .pickerStyle(.segmented)
+                            .pickerStyle(.segmented)
 
-                        Text("Day ID: \(model.currentDayId)")
-                            .font(.caption)
-                            .foregroundStyle(UIStyle.subtleText)
+                            Text("Day ID: \(model.currentDayId)")
+                                .font(.caption)
+                                .monospaced()
+                                .foregroundStyle(UIStyle.tertiaryText)
+                        }
                     }
                 }
             }
@@ -386,23 +537,59 @@ private struct SettingsWindowView: View {
             ScrollView {
                 VStack(spacing: 10) {
                     SettingsCard(title: "Notifications") {
-                        Toggle("Enable Notifications", isOn: Binding(
-                            get: { model.persistedSettings.notificationsEnabled ?? false },
-                            set: { model.setNotificationsEnabled($0) }
-                        ))
+                        VStack(alignment: .leading, spacing: 16) {
+                            Toggle(isOn: Binding(
+                                get: { model.persistedSettings.notificationsEnabled ?? false },
+                                set: { model.setNotificationsEnabled($0) }
+                            )) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Enable Notifications")
+                                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                                        .foregroundStyle(UIStyle.primaryText)
+                                    Text("Get notified when you exceed your daily limit.")
+                                        .font(.caption)
+                                        .foregroundStyle(UIStyle.tertiaryText)
+                                }
+                            }
+                            .toggleStyle(.switch)
 
-                        Stepper(value: Binding(
-                            get: { model.persistedSettings.overLimitReminderMinutes ?? 30 },
-                            set: { model.setReminderInterval(max(1, $0)) }
-                        ), in: 1...120, step: 5) {
-                            Text("Reminder Interval: \(model.reminderInterval)m")
-                        }
-
-                        HStack(spacing: 8) {
-                            Button("Mark Sent") { model.markNotificationSentNow() }
-                                .buttonStyle(.bordered)
-                            Button("Clear History") { model.clearNotificationHistory() }
-                                .buttonStyle(.bordered)
+                            if model.persistedSettings.notificationsEnabled == true {
+                                Divider()
+                                    .background(UIStyle.borderSubtle)
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack {
+                                        Text("REMINDER INTERVAL")
+                                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                                            .foregroundStyle(UIStyle.tertiaryText)
+                                        Spacer()
+                                        Text("\(model.reminderInterval) minutes")
+                                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                                            .foregroundStyle(UIStyle.primaryText)
+                                    }
+                                    
+                                    Stepper("", value: Binding(
+                                        get: { model.persistedSettings.overLimitReminderMinutes ?? 30 },
+                                        set: { model.setReminderInterval(max(1, $0)) }
+                                    ), in: 1...120, step: 5)
+                                    .labelsHidden()
+                                }
+                                
+                                Divider()
+                                    .background(UIStyle.borderSubtle)
+                                
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("DEBUG")
+                                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                                        .foregroundStyle(UIStyle.tertiaryText)
+                                    
+                                    HStack(spacing: 8) {
+                                        Button("Mark Sent") { model.markNotificationSentNow() }
+                                        Button("Clear History") { model.clearNotificationHistory() }
+                                    }
+                                    .buttonStyle(HeroGlassButtonStyle())
+                                }
+                            }
                         }
                     }
                 }
@@ -471,48 +658,68 @@ private enum SettingsTab {
 private struct LightSwitchPauseToggle: View {
     @Binding var isPaused: Bool
 
-    private let trackWidth: CGFloat = 58
-    private let trackHeight: CGFloat = 30
-    private let knobSize: CGFloat = 24
+    private let trackWidth: CGFloat = 64
+    private let trackHeight: CGFloat = 34
+    private let knobSize: CGFloat = 28
 
     var body: some View {
         Button {
-            withAnimation(.interactiveSpring(response: 0.28, dampingFraction: 0.82, blendDuration: 0.12)) {
+            withAnimation(.interactiveSpring(response: 0.35, dampingFraction: 0.75, blendDuration: 0.1)) {
                 isPaused.toggle()
             }
         } label: {
-            HStack(spacing: 10) {
-                Text(isPaused ? "Paused" : "Running")
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(UIStyle.primaryText)
-                    .frame(width: 60, alignment: .leading)
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(isPaused ? "Paused" : "Running")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(UIStyle.primaryText)
+                    Text(isPaused ? "Session inactive" : "Tracking time")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(UIStyle.tertiaryText)
+                }
+                
+                Spacer()
 
                 ZStack {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(isPaused ? Color(red: 0.82, green: 0.83, blue: 0.85) : Color(red: 0.20, green: 0.76, blue: 0.42))
+                    RoundedRectangle(cornerRadius: 17, style: .continuous)
+                        .fill(isPaused ? UIStyle.borderMedium : UIStyle.successText)
                         .frame(width: trackWidth, height: trackHeight)
+                        .shadow(color: isPaused ? Color.clear : UIStyle.successText.opacity(0.3), radius: 6, x: 0, y: 3)
 
                     Circle()
                         .fill(Color.white)
                         .frame(width: knobSize, height: knobSize)
-                        .shadow(color: Color.black.opacity(0.12), radius: 1.5, x: 0, y: 1)
+                        .shadow(color: Color.black.opacity(0.12), radius: 2, x: 0, y: 1)
                         .offset(x: isPaused ? -(trackWidth - knobSize) / 2 + 3 : (trackWidth - knobSize) / 2 - 3)
                 }
-                .animation(.interactiveSpring(response: 0.28, dampingFraction: 0.82, blendDuration: 0.12), value: isPaused)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(0.86))
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(UIStyle.cardBackground)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color.white.opacity(0.42), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(UIStyle.borderSubtle, lineWidth: 1)
             )
+            .shadow(color: UIStyle.shadowSubtle, radius: 8, x: 0, y: 2)
         }
         .buttonStyle(.plain)
+    }
+}
+
+private struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(UIStyle.activeBlue)
+            )
+            .foregroundStyle(Color.white)
+            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .shadow(color: UIStyle.activeBlue.opacity(0.3), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -1380,17 +1587,31 @@ private struct MutableSettings {
     }
 }
 
-private enum UIStyle {
-    static let panelBackground = Color(red: 0.95, green: 0.96, blue: 0.94)
-    static let cardBackground = Color.white.opacity(0.94)
+enum UIStyle {
+    static let panelBackground = Color(red: 0.98, green: 0.98, blue: 0.99)
+    static let cardBackground = Color.white
     static let heroBackground = LinearGradient(
-        colors: [Color(red: 0.93, green: 0.95, blue: 0.89), Color.white.opacity(0.9)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
+        colors: [
+            Color(red: 0.95, green: 0.96, blue: 0.98),
+            Color(red: 0.98, green: 0.98, blue: 0.99)
+        ],
+        startPoint: .top,
+        endPoint: .bottom
     )
-    static let primaryText = Color(red: 0.08, green: 0.12, blue: 0.10)
-    static let subtleText = Color(red: 0.34, green: 0.40, blue: 0.36)
-    static let alertText = Color(red: 0.75, green: 0.10, blue: 0.16)
-    static let alertBadge = Color(red: 1.0, green: 0.92, blue: 0.92)
-    static let neutralBadge = Color(red: 0.90, green: 0.92, blue: 0.90)
+    
+    static let primaryText = Color(red: 0.12, green: 0.12, blue: 0.14)
+    static let secondaryText = Color(red: 0.38, green: 0.38, blue: 0.42)
+    static let tertiaryText = Color(red: 0.60, green: 0.60, blue: 0.65)
+    static let subtleText = Color(red: 0.55, green: 0.55, blue: 0.60)
+    
+    static let borderSubtle = Color(white: 0.92)
+    static let borderMedium = Color(white: 0.88)
+    
+    static let alertText = Color(red: 0.85, green: 0.25, blue: 0.20)
+    static let successText = Color(red: 0.15, green: 0.65, blue: 0.35)
+    static let activeBlue = Color(red: 0.0, green: 0.48, blue: 1.0)
+    
+    // Shadows
+    static let shadowSubtle = Color.black.opacity(0.04)
+    static let shadowDeep = Color.black.opacity(0.12)
 }

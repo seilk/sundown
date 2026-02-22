@@ -11,13 +11,13 @@ struct RitualDonutView: View {
                     .stroke(Color.white.opacity(0.35), lineWidth: 18)
 
                 Circle()
-                    .trim(from: 0, to: min(max(progressToLimit, 0.02), 1.0))
+                    .trim(from: 0, to: progressToLimit)
                     .stroke(progressGradient, style: StrokeStyle(lineWidth: 18, lineCap: .round))
                     .rotationEffect(.degrees(-90))
 
-                if overflowProgress > 0 {
+                if safeWorkedSeconds > limitSeconds {
                     Circle()
-                        .trim(from: 0, to: min(overflowProgress, 1.0))
+                        .trim(from: 0, to: overflowProgress)
                         .stroke(Color.black.opacity(0.85), style: StrokeStyle(lineWidth: 18, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                 }
@@ -45,26 +45,16 @@ struct RitualDonutView: View {
     }
 
     private var progressToLimit: Double {
-        let limitSeconds = max(1, limitMinutes * 60)
-        guard limitMinutes > 0 else {
-            return 0
-        }
-
-        return min(Double(workedSeconds) / Double(limitSeconds), 1.0)
+        min(max(Double(safeWorkedSeconds) / Double(limitSeconds), 0.0), 1.0)
     }
 
     private var overflowProgress: Double {
-        let limitSeconds = max(1, limitMinutes * 60)
-        guard limitMinutes > 0 else {
-            return 0
-        }
-
-        let overflowSeconds = max(0, workedSeconds - limitSeconds)
-        return Double(overflowSeconds) / Double(limitSeconds)
+        let overflowSeconds = max(0, safeWorkedSeconds - limitSeconds)
+        return min(max(Double(overflowSeconds) / Double(limitSeconds), 0.0), 1.0)
     }
 
     private var workedHoursText: String {
-        String(format: "%.1fh", Double(workedSeconds) / 3600.0)
+        String(format: "%.1fh", Double(safeWorkedSeconds) / 3600.0)
     }
 
     private var limitHoursText: String {
@@ -72,7 +62,7 @@ struct RitualDonutView: View {
     }
 
     private var deltaText: String {
-        let deltaSeconds = workedSeconds - (limitMinutes * 60)
+        let deltaSeconds = safeWorkedSeconds - limitSeconds
         if abs(deltaSeconds) < 60 {
             return "On target"
         }
@@ -84,7 +74,7 @@ struct RitualDonutView: View {
     }
 
     private var deltaColor: Color {
-        let deltaSeconds = workedSeconds - (limitMinutes * 60)
+        let deltaSeconds = safeWorkedSeconds - limitSeconds
         if deltaSeconds > 0 {
             return Color(red: 0.93, green: 0.20, blue: 0.18)
         }
@@ -111,6 +101,14 @@ struct RitualDonutView: View {
 
     private var primaryText: Color {
         Color(red: 0.08, green: 0.12, blue: 0.10)
+    }
+
+    private var safeWorkedSeconds: Int {
+        max(0, workedSeconds)
+    }
+
+    private var limitSeconds: Int {
+        max(1, limitMinutes * 60)
     }
 
     private var subtleText: Color {

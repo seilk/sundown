@@ -175,10 +175,10 @@ private struct MenuPanelView: View {
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(UIStyle.subtleText)
                     Spacer()
-                    StatusPill(
-                        text: model.shouldNotify ? "Notify" : "Calm",
-                        isAlert: model.shouldNotify
-                    )
+                    Button("Reset") {
+                        model.resetSundownSession()
+                    }
+                    .buttonStyle(HeroGlassButtonStyle())
                 }
 
                 if model.gateState == .allowed, model.hasStartedSundown, let worktimeState = model.worktimeState {
@@ -466,21 +466,6 @@ private enum SettingsTab {
     case behavior
     case notifications
     case qa
-}
-
-private struct StatusPill: View {
-    let text: String
-    let isAlert: Bool
-
-    var body: some View {
-        Text(text)
-            .font(.caption2)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(isAlert ? UIStyle.alertBadge : UIStyle.neutralBadge)
-            .foregroundStyle(isAlert ? UIStyle.alertText : UIStyle.subtleText)
-            .clipShape(Capsule())
-    }
 }
 
 private struct LightSwitchPauseToggle: View {
@@ -881,6 +866,26 @@ private final class SundownViewModel: ObservableObject {
         isSundownActive = !paused
     }
 
+    func resetSundownSession() {
+        let now = Date()
+        hasStartedSundown = false
+        isSundownActive = false
+        inactivitySeconds = 0
+        lastNotificationAt = nil
+        lastTickAt = now
+        lastInteractionAt = now
+        setTrackedWorkSeconds(0)
+
+        if let dayId = timeEngine.dayId(now: now, settings: persistedSettings),
+           let limitMinutes = persistedSettings.dailyLimitMinutes {
+            let record = DayRecord(dayId: dayId, limitMinutes: limitMinutes)
+            dayRecordStore.save(record)
+            dayRecord = record
+        } else {
+            dayRecord = nil
+        }
+    }
+
     func setActiveInput() {
         markUserInteraction()
     }
@@ -1240,6 +1245,10 @@ private final class SundownViewModel: ObservableObject {
         let delta = max(0.0, now.timeIntervalSince(lastTickAt))
         self.lastTickAt = now
 
+        if delta > 300 {
+            return
+        }
+
         let idleThresholdSeconds = max(1, (persistedSettings.idleThresholdMinutes ?? 5) * 60)
         if currentInactivity >= idleThresholdSeconds {
             return
@@ -1256,8 +1265,10 @@ private final class SundownViewModel: ObservableObject {
         let normalized = max(0, seconds)
         trackedSecondsAccumulator = Double(normalized)
         trackedWorkSecondsTotal = normalized
-        lastTickAt = Date()
-        markUserInteraction()
+        let now = Date()
+        lastTickAt = now
+        lastInteractionAt = now
+        inactivitySeconds = 0
     }
 
     private func seedTodayRecord(workMinutes: Int) {

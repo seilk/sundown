@@ -144,13 +144,13 @@ final class StatusIconRenderer {
     }
 
     private func statusTitleText(snapshot: StatusIconSnapshot) -> String {
+        guard snapshot.menuBarDisplayMode == .numeric else {
+            return ""
+        }
+
         guard snapshot.gateState == .allowed,
               let worktimeState = snapshot.worktimeState else {
             return "SET"
-        }
-
-        guard snapshot.menuBarDisplayMode == .numeric else {
-            return ""
         }
 
         switch worktimeState {

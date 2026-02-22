@@ -120,7 +120,6 @@ private final class StatusCoordinator: NSObject {
             return
         }
 
-        button.image = render.0.image
         button.contentTintColor = nil
         button.imagePosition = render.0.showsIcon ? .imageLeft : .noImage
         button.image = render.0.showsIcon ? render.0.image : nil
@@ -580,6 +579,7 @@ private final class SundownViewModel: ObservableObject {
     private var timerCancellable: AnyCancellable?
     private var localEventMonitor: Any?
     private var globalEventMonitor: Any?
+    private var wakeObserver: AnyCancellable?
     private var lastTickAt: Date?
     private var trackedSecondsAccumulator: Double = 0
     private var lastInteractionAt = Date()
@@ -608,6 +608,7 @@ private final class SundownViewModel: ObservableObject {
 
         setupHeartbeat()
         setupActivityMonitors()
+        setupWakeObserver()
     }
 
     deinit {
@@ -945,7 +946,8 @@ private final class SundownViewModel: ObservableObject {
                 dayResetMinutesFromMidnight: nil,
                 notificationsEnabled: nil,
                 idleThresholdMinutes: nil,
-                overLimitReminderMinutes: nil
+                overLimitReminderMinutes: nil,
+                menuBarDisplayModeRawValue: persistedSettings.menuBarDisplayModeRawValue
             )
         )
         reloadSettings()
@@ -979,7 +981,8 @@ private final class SundownViewModel: ObservableObject {
                     dayResetMinutesFromMidnight: nil,
                     notificationsEnabled: nil,
                     idleThresholdMinutes: nil,
-                    overLimitReminderMinutes: nil
+                    overLimitReminderMinutes: nil,
+                    menuBarDisplayModeRawValue: persistedSettings.menuBarDisplayModeRawValue
                 )
             )
             prototypeScenario = .underLimit
@@ -999,7 +1002,8 @@ private final class SundownViewModel: ObservableObject {
                     dayResetMinutesFromMidnight: 240,
                     notificationsEnabled: false,
                     idleThresholdMinutes: 5,
-                    overLimitReminderMinutes: 30
+                    overLimitReminderMinutes: 30,
+                    menuBarDisplayModeRawValue: persistedSettings.menuBarDisplayModeRawValue
                 )
             )
             prototypeScenario = .underLimit
@@ -1019,7 +1023,8 @@ private final class SundownViewModel: ObservableObject {
                     dayResetMinutesFromMidnight: 240,
                     notificationsEnabled: true,
                     idleThresholdMinutes: 5,
-                    overLimitReminderMinutes: 30
+                    overLimitReminderMinutes: 30,
+                    menuBarDisplayModeRawValue: persistedSettings.menuBarDisplayModeRawValue
                 )
             )
             previousScenario = .underLimit
@@ -1039,7 +1044,8 @@ private final class SundownViewModel: ObservableObject {
                     dayResetMinutesFromMidnight: 240,
                     notificationsEnabled: false,
                     idleThresholdMinutes: 5,
-                    overLimitReminderMinutes: 30
+                    overLimitReminderMinutes: 30,
+                    menuBarDisplayModeRawValue: persistedSettings.menuBarDisplayModeRawValue
                 )
             )
             prototypeScenario = .atLimit
@@ -1059,7 +1065,8 @@ private final class SundownViewModel: ObservableObject {
                     dayResetMinutesFromMidnight: 1_440,
                     notificationsEnabled: true,
                     idleThresholdMinutes: 5,
-                    overLimitReminderMinutes: 30
+                    overLimitReminderMinutes: 30,
+                    menuBarDisplayModeRawValue: persistedSettings.menuBarDisplayModeRawValue
                 )
             )
             prototypeScenario = .overLimit
@@ -1180,6 +1187,21 @@ private final class SundownViewModel: ObservableObject {
                 self?.markUserInteraction()
             }
         }
+    }
+
+    private func setupWakeObserver() {
+        wakeObserver = NSWorkspace.shared.notificationCenter
+            .publisher(for: NSWorkspace.didWakeNotification)
+            .sink { [weak self] _ in
+                guard let self else {
+                    return
+                }
+
+                let now = Date()
+                self.lastTickAt = now
+                self.lastInteractionAt = now
+                self.inactivitySeconds = 0
+            }
     }
 
     private func markUserInteraction() {

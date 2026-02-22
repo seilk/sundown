@@ -28,6 +28,7 @@ enum MenuBarDisplayMode: Int, CaseIterable {
 
 struct StatusIconSnapshot {
     let gateState: OnboardingGateState
+    let hasStartedSundown: Bool
     let worktimeState: WorktimeState?
     let dailyLimitMinutes: Int?
     let menuTitle: String
@@ -59,7 +60,8 @@ final class StatusIconRenderer {
         let color = color(for: snapshot, phase: phase)
         let image = symbolImage(color: color)
         let title = statusTitleText(snapshot: snapshot)
-        let showsIcon = snapshot.menuBarDisplayMode == .icon
+        let isWaitingToStart = snapshot.gateState == .allowed && !snapshot.hasStartedSundown
+        let showsIcon = snapshot.menuBarDisplayMode == .icon || isWaitingToStart
         let toolTip = toolTipText(snapshot: snapshot, phase: phase)
 
         return (
@@ -145,6 +147,10 @@ final class StatusIconRenderer {
 
     private func statusTitleText(snapshot: StatusIconSnapshot) -> String {
         guard snapshot.menuBarDisplayMode == .numeric else {
+            return ""
+        }
+
+        if snapshot.gateState == .allowed && !snapshot.hasStartedSundown {
             return ""
         }
 

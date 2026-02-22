@@ -14,6 +14,10 @@ public final class UserNotificationCenterService: NotificationService {
     }
 
     public func requestAuthorizationIfNeeded() {
+        guard canAccessUserNotificationCenter else {
+            return
+        }
+
         let center = centerProvider()
         center.getNotificationSettings { settings in
             guard settings.authorizationStatus == .notDetermined else {
@@ -25,6 +29,10 @@ public final class UserNotificationCenterService: NotificationService {
     }
 
     public func sendOverLimitNotification(message: String) {
+        guard canAccessUserNotificationCenter else {
+            return
+        }
+
         let center = centerProvider()
         let content = UNMutableNotificationContent()
         content.title = "Sundown"
@@ -38,5 +46,9 @@ public final class UserNotificationCenterService: NotificationService {
         )
 
         center.add(request) { _ in }
+    }
+
+    private var canAccessUserNotificationCenter: Bool {
+        Bundle.main.bundleURL.pathExtension == "app"
     }
 }

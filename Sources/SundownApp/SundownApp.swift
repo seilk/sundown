@@ -601,8 +601,8 @@ private struct SettingsWindowView: View {
 
             ScrollView {
                 VStack(spacing: 10) {
-                    SettingsCard(title: "QA Lab") {
-                        Text("Run one-click scenarios to verify onboarding, overwork, idle/break, and notification behavior.")
+                    SettingsCard(title: "Lab") {
+                        Text("Developer mode: quick sandbox for trying edge cases before shipping.")
                             .font(.caption)
                             .foregroundStyle(UIStyle.subtleText)
 
@@ -644,7 +644,7 @@ private struct SettingsWindowView: View {
                     }
                 }
             }
-            .tabItem { Label("QA Lab", systemImage: "testtube.2") }
+            .tabItem { Label("Lab", systemImage: "testtube.2") }
             .tag(SettingsTab.qa)
         }
     }
@@ -732,14 +732,15 @@ private struct PrimaryButtonStyle: ButtonStyle {
             configuration.label
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(UIStyle.activeBlue)
+                        .fill(UIStyle.sunsetGradient)
                         .brightness(isHovering ? 0.08 : 0.0)
+                        .saturation(isHovering ? 1.1 : 1.0)
                 )
                 .foregroundStyle(Color.white)
                 .opacity(configuration.isPressed ? 0.9 : 1.0)
                 .scaleEffect(isHovering && !configuration.isPressed ? 1.02 : (configuration.isPressed ? 0.98 : 1.0))
                 .shadow(
-                    color: UIStyle.activeBlue.opacity(isHovering ? 0.5 : 0.3),
+                    color: UIStyle.sunsetOrange.opacity(isHovering ? 0.5 : 0.3),
                     radius: isHovering ? 12 : 8,
                     x: 0,
                     y: isHovering ? 6 : 4
@@ -783,7 +784,7 @@ private struct HeroGlassButtonStyle: ButtonStyle {
                 .opacity(configuration.isPressed ? 0.9 : 1.0)
                 .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
                 .shadow(
-                    color: isHovering ? UIStyle.activeBlue.opacity(0.26) : Color.clear,
+                    color: isHovering ? UIStyle.sunsetOrange.opacity(0.26) : Color.clear,
                     radius: isHovering ? 8 : 0,
                     x: 0,
                     y: isHovering ? 3 : 0
@@ -798,26 +799,26 @@ private struct HeroGlassButtonStyle: ButtonStyle {
 
         private var backgroundColor: Color {
             if prominent {
-                return isHovering ? UIStyle.activeBlue.opacity(0.14) : Color.white.opacity(0.92)
+                return isHovering ? UIStyle.sunsetPink.opacity(0.28) : UIStyle.sunsetOrange.opacity(0.2)
             } else {
-                return isHovering ? Color.white.opacity(0.96) : Color.white.opacity(0.72)
+                return isHovering ? UIStyle.sunsetPink.opacity(0.2) : UIStyle.sunsetOrange.opacity(0.12)
             }
         }
 
         private var borderColor: Color {
             if isHovering {
-                return UIStyle.activeBlue.opacity(0.75)
+                return UIStyle.sunsetPink.opacity(0.82)
             } else {
-                return Color.white.opacity(0.45)
+                return UIStyle.sunsetOrange.opacity(0.62)
             }
         }
 
         private var foregroundColor: Color {
             if prominent {
-                return isHovering ? UIStyle.activeBlue : UIStyle.primaryText
+                return isHovering ? UIStyle.sunsetPink : UIStyle.sunsetOrange
             }
 
-            return isHovering ? UIStyle.activeBlue : UIStyle.subtleText
+            return isHovering ? UIStyle.sunsetPink : UIStyle.sunsetOrange
         }
     }
 }
@@ -1094,6 +1095,7 @@ private final class SundownViewModel: ObservableObject {
     var statusIconSnapshot: StatusIconSnapshot {
         StatusIconSnapshot(
             gateState: gateState,
+            hasStartedSundown: hasStartedSundown,
             worktimeState: worktimeState,
             dailyLimitMinutes: persistedSettings.dailyLimitMinutes,
             menuTitle: menuTitle,
@@ -1694,6 +1696,18 @@ enum UIStyle {
     static let successText = Color(red: 0.15, green: 0.65, blue: 0.35)
     static let activeBlue = Color(red: 0.0, green: 0.48, blue: 1.0)
     
+
+    // Sunset Palette
+    static let sunsetOrange = Color(red: 1.0, green: 0.35, blue: 0.25)
+    static let sunsetPink = Color(red: 1.0, green: 0.20, blue: 0.45)
+    static let sunsetGradient = LinearGradient(
+        colors: [
+            Color(red: 1.0, green: 0.45, blue: 0.35),
+            Color(red: 1.0, green: 0.25, blue: 0.50)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
     // Shadows
     static let shadowSubtle = Color.black.opacity(0.04)
     static let shadowDeep = Color.black.opacity(0.12)

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": {
+    "paths": [
+      "./.skills/agent-skills/skills",
+      "./.skills/anthropic-skills/skills",
+      "./.claude/skills"
+    ]
+  }
+}

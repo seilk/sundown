@@ -18,6 +18,8 @@ CONTENTS_DIR="$APP_BUNDLE_DIR/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 ZIP_NAME="${APP_NAME}-${VERSION}.zip"
 ZIP_PATH="$DIST_DIR/$ZIP_NAME"
+RELEASE_BUILD="${RELEASE_BUILD:-0}"
+APPLE_NOTARY_PASSWORD="${APPLE_APP_SPECIFIC_PASSWORD:-${APPLE_PASSWORD:-}}"
 
 mkdir -p "$DIST_DIR"
 rm -rf "$APP_BUNDLE_DIR" "$ZIP_PATH"
@@ -28,6 +30,7 @@ BIN_PATH="$(swift build -c release --show-bin-path)"
 mkdir -p "$MACOS_DIR"
 cp "$BIN_PATH/$EXECUTABLE_NAME" "$MACOS_DIR/$APP_NAME"
 chmod +x "$MACOS_DIR/$APP_NAME"
+mkdir -p "$CONTENTS_DIR/Resources"
 
 cat > "$CONTENTS_DIR/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -60,8 +63,28 @@ cat > "$CONTENTS_DIR/Info.plist" <<EOF
 </plist>
 EOF
 
-if [[ -n "${APPLE_SIGN_IDENTITY:-}" ]]; then
-  codesign --force --sign "$APPLE_SIGN_IDENTITY" --options runtime --timestamp "$APP_BUNDLE_DIR"
+if [[ "$RELEASE_BUILD" == "1" ]]; then
+  if [[ -z "${APPLE_SIGN_IDENTITY:-}" || -z "${APPLE_ID:-}" || -z "${APPLE_TEAM_ID:-}" || -z "$APPLE_NOTARY_PASSWORD" ]]; then
+    echo "Release build requires APPLE_SIGN_IDENTITY, APPLE_ID, APPLE_TEAM_ID, and APPLE_APP_SPECIFIC_PASSWORD (or APPLE_PASSWORD)."
+    exit 1
+  fi
+
+  codesign --force --deep --sign "$APPLE_SIGN_IDENTITY" --options runtime --timestamp "$APP_BUNDLE_DIR"
+
+  codesign --verify --deep --strict --verbose=2 "$APP_BUNDLE_DIR"
+  ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE_DIR" "$ZIP_PATH"
+
+  xcrun notarytool submit "$ZIP_PATH" \
+    --apple-id "$APPLE_ID" \
+    --password "$APPLE_NOTARY_PASSWORD" \
+    --team-id "$APPLE_TEAM_ID" \
+    --wait
+
+  xcrun stapler staple "$APP_BUNDLE_DIR"
+  xcrun stapler validate "$APP_BUNDLE_DIR"
+  spctl --assess --type execute -vv "$APP_BUNDLE_DIR"
+else
+  codesign --force --deep --sign - "$APP_BUNDLE_DIR"
 fi
 
 ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE_DIR" "$ZIP_PATH"

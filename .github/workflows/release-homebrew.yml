@@ -31,7 +31,11 @@ jobs:
         id: package
         shell: bash
         env:
+          RELEASE_BUILD: "1"
           APPLE_SIGN_IDENTITY: ${{ secrets.APPLE_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: bash scripts/package-macos-app.sh "${{ steps.meta.outputs.version }}"
 
       - name: Render Homebrew cask

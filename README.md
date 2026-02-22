@@ -45,10 +45,17 @@ On tag push, GitHub Actions now:
 
 1. runs tests,
 2. builds and bundles `Sundown.app`,
-3. creates `Sundown-<version>.zip`,
+3. signs with Developer ID, notarizes, and staples the app,
 4. calculates SHA-256,
 5. generates `dist/homebrew/Casks/sundown.rb`,
 6. uploads both files to the GitHub Release.
+
+Required GitHub secrets for release signing/notarization:
+
+- `APPLE_SIGN_IDENTITY`
+- `APPLE_ID`
+- `APPLE_TEAM_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
 
 Workflow file: `.github/workflows/release-homebrew.yml`
 

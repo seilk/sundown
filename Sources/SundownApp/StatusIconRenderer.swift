@@ -45,6 +45,7 @@ struct StatusIconAppearance {
 
 final class StatusIconRenderer {
     private let theme: StatusIconTheme
+    private let durationFormatter = WorktimeDurationFormatter()
 
     private let nearLimitProgressEnter = 0.85
     private let nearLimitProgressExit = 0.82
@@ -161,9 +162,9 @@ final class StatusIconRenderer {
 
         switch worktimeState {
         case let .underLimit(remainingSeconds):
-            return formatNumericDuration(seconds: remainingSeconds, isOver: false)
+            return durationFormatter.numericDuration(seconds: remainingSeconds, isOver: false)
         case let .overLimit(overtimeSeconds):
-            return formatNumericDuration(seconds: overtimeSeconds, isOver: true)
+            return durationFormatter.numericDuration(seconds: overtimeSeconds, isOver: true)
         }
     }
 
@@ -174,7 +175,7 @@ final class StatusIconRenderer {
 
         case .normal, .nearLimit:
             if case let .underLimit(remainingSeconds) = snapshot.worktimeState {
-                let remaining = formatDuration(seconds: remainingSeconds)
+                let remaining = durationFormatter.compactDuration(seconds: remainingSeconds)
                 if phase == .nearLimit {
                     return "Sundown - Approaching limit (\(remaining) left)"
                 }
@@ -186,7 +187,7 @@ final class StatusIconRenderer {
 
         case .overLimit:
             if case let .overLimit(overtimeSeconds) = snapshot.worktimeState {
-                return "Sundown - Over by \(formatDuration(seconds: overtimeSeconds))"
+                return "Sundown - Over by \(durationFormatter.compactDuration(seconds: overtimeSeconds))"
             }
 
             return "Sundown - Over limit"
@@ -242,34 +243,4 @@ final class StatusIconRenderer {
         return NSColor(red: red, green: green, blue: blue, alpha: 1.0)
     }
 
-    private func formatHoursOneDecimal(seconds: Int) -> String {
-        let hours = Double(max(0, seconds)) / 3_600.0
-        return String(format: "%.1f", hours)
-    }
-
-    private func formatNumericDuration(seconds: Int, isOver: Bool) -> String {
-        let normalized = max(0, seconds)
-        if normalized < 3_600 {
-            let minutes = normalized / 60
-            if minutes == 0 {
-                return "0m"
-            }
-            return isOver ? "+\(minutes)m" : "-\(minutes)m"
-        }
-
-        let hourText = "\(formatHoursOneDecimal(seconds: normalized))h"
-        return isOver ? "+\(hourText)" : "-\(hourText)"
-    }
-
-    private func formatDuration(seconds: Int) -> String {
-        let normalized = max(0, seconds)
-        let hours = normalized / 3_600
-        let minutes = (normalized % 3_600) / 60
-
-        if hours > 0 {
-            return String(format: "%dh %02dm", hours, minutes)
-        }
-
-        return String(format: "%dm", minutes)
-    }
 }

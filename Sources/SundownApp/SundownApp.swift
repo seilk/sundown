@@ -284,7 +284,7 @@ private struct MenuPanelView: View {
                         }
                     }
                     .padding(20)
-                    .background(UIStyle.cardBackground)
+                    .background(UIStyle.heroBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .shadow(color: UIStyle.shadowSubtle, radius: 10, x: 0, y: 4)
                     .overlay(
@@ -838,6 +838,11 @@ private struct SettingsCard<Content: View>: View {
         .padding(12)
         .background(UIStyle.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(UIStyle.borderSubtle, lineWidth: 1)
+        )
+        .shadow(color: UIStyle.shadowSubtle, radius: 6, x: 0, y: 2)
     }
 }
 
@@ -847,6 +852,7 @@ private final class SundownViewModel: ObservableObject {
 
     private let onboardingGateEvaluator = OnboardingGateEvaluator()
     private let overLimitNotificationPolicy = OverLimitNotificationPolicy()
+    private let durationFormatter = WorktimeDurationFormatter()
     private let notificationService: NotificationService
     private let timeEngine = TimeEngine()
     private let settingsStore: UserDefaultsSettingsStore
@@ -1047,7 +1053,7 @@ private final class SundownViewModel: ObservableObject {
         }
 
         if deltaMinutes < 0 {
-            return Color(red: 0.12, green: 0.44, blue: 0.84)
+            return UIStyle.activeBlue
         }
 
         return UIStyle.subtleText
@@ -1237,7 +1243,7 @@ private final class SundownViewModel: ObservableObject {
         }
 
         if enabled {
-            DispatchQueue.main.async { [notificationService] in
+            Task { @MainActor [notificationService] in
                 notificationService.requestAuthorizationIfNeeded()
             }
         }
@@ -1468,10 +1474,7 @@ private final class SundownViewModel: ObservableObject {
     }
 
     private func formatDuration(seconds: Int) -> String {
-        let hours = seconds / 3_600
-        let minutes = (seconds % 3_600) / 60
-        let remainingSeconds = seconds % 60
-        return String(format: "%dh %02dm %02ds", hours, minutes, remainingSeconds)
+        durationFormatter.detailedDuration(seconds: seconds)
     }
 
     private func setDailyLimitComponents(hours: Int, minutes: Int) {
@@ -1582,8 +1585,9 @@ private final class SundownViewModel: ObservableObject {
     }
 
     private func seedTodayRecord(workMinutes: Int) {
-        guard let dayId = timeEngine.dayId(now: Date(), settings: settingsStore.load()),
-              let limitMinutes = settingsStore.load().dailyLimitMinutes else {
+        let latestSettings = settingsStore.load()
+        guard let dayId = timeEngine.dayId(now: Date(), settings: latestSettings),
+              let limitMinutes = latestSettings.dailyLimitMinutes else {
             dayRecord = nil
             return
         }
@@ -1691,28 +1695,30 @@ private struct MutableSettings {
 }
 
 enum UIStyle {
-    static let panelBackground = Color(red: 0.98, green: 0.98, blue: 0.99)
-    static let cardBackground = Color.white
+    static let panelBackground = Color(nsColor: .windowBackgroundColor)
+    static let cardBackground = Color(nsColor: .controlBackgroundColor)
     static let heroBackground = LinearGradient(
         colors: [
-            Color(red: 0.95, green: 0.96, blue: 0.98),
-            Color(red: 0.98, green: 0.98, blue: 0.99)
+            Color(nsColor: .underPageBackgroundColor),
+            Color(nsColor: .controlBackgroundColor)
         ],
         startPoint: .top,
         endPoint: .bottom
     )
     
-    static let primaryText = Color(red: 0.12, green: 0.12, blue: 0.14)
-    static let secondaryText = Color(red: 0.38, green: 0.38, blue: 0.42)
-    static let tertiaryText = Color(red: 0.60, green: 0.60, blue: 0.65)
-    static let subtleText = Color(red: 0.55, green: 0.55, blue: 0.60)
+    static let primaryText = Color(nsColor: .labelColor)
+    static let secondaryText = Color(nsColor: .secondaryLabelColor)
+    static let tertiaryText = Color(nsColor: .tertiaryLabelColor)
+    static let subtleText = Color(nsColor: .quaternaryLabelColor)
     
-    static let borderSubtle = Color(white: 0.92)
-    static let borderMedium = Color(white: 0.88)
+    static let borderSubtle = Color(nsColor: .separatorColor).opacity(0.45)
+    static let borderMedium = Color(nsColor: .separatorColor).opacity(0.78)
     
-    static let alertText = Color(red: 0.85, green: 0.25, blue: 0.20)
-    static let successText = Color(red: 0.15, green: 0.65, blue: 0.35)
+    static let alertText = Color(nsColor: .systemRed)
+    static let successText = Color(nsColor: .systemGreen)
     static let activeBlue = Color(red: 0.0, green: 0.48, blue: 1.0)
+    static let accentCyan = Color(red: 0.0, green: 0.8, blue: 1.0)
+    static let warningAmber = Color(red: 1.0, green: 0.75, blue: 0.0)
     
 
     // Sunset Palette

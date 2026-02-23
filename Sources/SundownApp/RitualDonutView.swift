@@ -17,6 +17,7 @@ struct RitualDonutView: View {
                     .stroke(progressGradient, style: StrokeStyle(lineWidth: 20, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .shadow(color: progressColor.opacity(0.3), radius: 8, x: 0, y: 4)
+                    .animation(.spring(response: 0.45, dampingFraction: 0.84), value: progressToLimit)
 
                 // Overflow arc
                 if safeWorkedSeconds > limitSeconds {
@@ -25,6 +26,7 @@ struct RitualDonutView: View {
                         .stroke(UIStyle.alertText, style: StrokeStyle(lineWidth: 20, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                         .shadow(color: UIStyle.alertText.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .animation(.spring(response: 0.45, dampingFraction: 0.84), value: overflowProgress)
                 }
 
                 VStack(spacing: 0) {
@@ -100,7 +102,7 @@ struct RitualDonutView: View {
         if progress >= 1.0 {
             return UIStyle.successText
         } else if progress > 0.8 {
-            return Color(red: 1.0, green: 0.75, blue: 0.0) // Amber
+            return UIStyle.warningAmber
         } else {
             return UIStyle.activeBlue
         }
@@ -110,7 +112,7 @@ struct RitualDonutView: View {
         AngularGradient(
             gradient: Gradient(colors: [
                 UIStyle.activeBlue,
-                Color(red: 0.0, green: 0.8, blue: 1.0), // Cyan
+                UIStyle.accentCyan,
                 UIStyle.successText
             ]),
             center: .center
@@ -125,4 +127,3 @@ struct RitualDonutView: View {
         max(1, limitMinutes * 60)
     }
 }
-

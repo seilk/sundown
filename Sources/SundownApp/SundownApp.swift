@@ -284,7 +284,7 @@ private struct MenuPanelView: View {
                         }
                     }
                     .padding(20)
-                    .background(UIStyle.heroBackground)
+                    .background(UIStyle.cardBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .shadow(color: UIStyle.shadowSubtle, radius: 10, x: 0, y: 4)
                     .overlay(
@@ -1053,7 +1053,7 @@ private final class SundownViewModel: ObservableObject {
         }
 
         if deltaMinutes < 0 {
-            return UIStyle.activeBlue
+            return Color(red: 0.12, green: 0.44, blue: 0.84)
         }
 
         return UIStyle.subtleText
@@ -1695,30 +1695,28 @@ private struct MutableSettings {
 }
 
 enum UIStyle {
-    static let panelBackground = Color(nsColor: .windowBackgroundColor)
-    static let cardBackground = Color(nsColor: .controlBackgroundColor)
+    static let panelBackground = Color(red: 0.98, green: 0.98, blue: 0.99)
+    static let cardBackground = Color.white
     static let heroBackground = LinearGradient(
         colors: [
-            Color(nsColor: .underPageBackgroundColor),
-            Color(nsColor: .controlBackgroundColor)
+            Color(red: 0.95, green: 0.96, blue: 0.98),
+            Color(red: 0.98, green: 0.98, blue: 0.99)
         ],
         startPoint: .top,
         endPoint: .bottom
     )
     
-    static let primaryText = Color(nsColor: .labelColor)
-    static let secondaryText = Color(nsColor: .secondaryLabelColor)
-    static let tertiaryText = Color(nsColor: .tertiaryLabelColor)
-    static let subtleText = Color(nsColor: .quaternaryLabelColor)
+    static let primaryText = Color(red: 0.12, green: 0.12, blue: 0.14)
+    static let secondaryText = Color(red: 0.38, green: 0.38, blue: 0.42)
+    static let tertiaryText = Color(red: 0.60, green: 0.60, blue: 0.65)
+    static let subtleText = Color(red: 0.55, green: 0.55, blue: 0.60)
     
-    static let borderSubtle = Color(nsColor: .separatorColor).opacity(0.45)
-    static let borderMedium = Color(nsColor: .separatorColor).opacity(0.78)
+    static let borderSubtle = Color(white: 0.92)
+    static let borderMedium = Color(white: 0.88)
     
-    static let alertText = Color(nsColor: .systemRed)
-    static let successText = Color(nsColor: .systemGreen)
+    static let alertText = Color(red: 0.85, green: 0.25, blue: 0.20)
+    static let successText = Color(red: 0.15, green: 0.65, blue: 0.35)
     static let activeBlue = Color(red: 0.0, green: 0.48, blue: 1.0)
-    static let accentCyan = Color(red: 0.0, green: 0.8, blue: 1.0)
-    static let warningAmber = Color(red: 1.0, green: 0.75, blue: 0.0)
     
 
     // Sunset Palette

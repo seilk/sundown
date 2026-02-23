@@ -102,7 +102,7 @@ struct RitualDonutView: View {
         if progress >= 1.0 {
             return UIStyle.successText
         } else if progress > 0.8 {
-            return UIStyle.warningAmber
+            return Color(red: 1.0, green: 0.75, blue: 0.0)
         } else {
             return UIStyle.activeBlue
         }
@@ -112,7 +112,7 @@ struct RitualDonutView: View {
         AngularGradient(
             gradient: Gradient(colors: [
                 UIStyle.activeBlue,
-                UIStyle.accentCyan,
+                Color(red: 0.0, green: 0.8, blue: 1.0),
                 UIStyle.successText
             ]),
             center: .center

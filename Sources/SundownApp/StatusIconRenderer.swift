@@ -51,6 +51,12 @@ final class StatusIconRenderer {
     private let nearLimitProgressExit = 0.82
     private let nearLimitSecondsEnter = 1_800
     private let nearLimitSecondsExit = 2_100
+    private let progressColorAnchors: [(Double, NSColor)] = [
+        (0.0, NSColor(red: 0.16, green: 0.72, blue: 0.34, alpha: 1.0)),
+        (0.45, NSColor(red: 0.18, green: 0.47, blue: 0.93, alpha: 1.0)),
+        (0.85, NSColor(red: 1.0, green: 0.62, blue: 0.10, alpha: 1.0)),
+        (1.0, NSColor(red: 0.93, green: 0.20, blue: 0.18, alpha: 1.0))
+    ]
 
     init(theme: StatusIconTheme = .sunset) {
         self.theme = theme
@@ -212,23 +218,17 @@ final class StatusIconRenderer {
 
     private func gradientColor(progress: Double) -> NSColor {
         let normalized = min(max(progress, 0.0), 1.0)
-        let anchors: [(Double, NSColor)] = [
-            (0.0, NSColor(red: 0.16, green: 0.72, blue: 0.34, alpha: 1.0)),
-            (0.45, NSColor(red: 0.18, green: 0.47, blue: 0.93, alpha: 1.0)),
-            (0.85, NSColor(red: 1.0, green: 0.62, blue: 0.10, alpha: 1.0)),
-            (1.0, NSColor(red: 0.93, green: 0.20, blue: 0.18, alpha: 1.0))
-        ]
 
-        for index in 0..<(anchors.count - 1) {
-            let current = anchors[index]
-            let next = anchors[index + 1]
+        for index in 0..<(progressColorAnchors.count - 1) {
+            let current = progressColorAnchors[index]
+            let next = progressColorAnchors[index + 1]
             if normalized >= current.0 && normalized <= next.0 {
                 let localT = (normalized - current.0) / (next.0 - current.0)
                 return interpolateColor(from: current.1, to: next.1, t: localT)
             }
         }
 
-        return anchors.last?.1 ?? .systemRed
+        return progressColorAnchors.last?.1 ?? .systemRed
     }
 
     private func interpolateColor(from: NSColor, to: NSColor, t: Double) -> NSColor {

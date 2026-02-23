@@ -9,15 +9,11 @@ public struct DayBoundary {
 
     public func dayId(for date: Date, resetMinutesFromMidnight: Int) -> String {
         let resetClamped = min(max(resetMinutesFromMidnight, 0), 1_439)
-        let startOfDate = calendar.startOfDay(for: date)
-        let minutesSinceMidnight = calendar.dateComponents([.minute], from: startOfDate, to: date).minute ?? 0
-        let offsetDays = minutesSinceMidnight < resetClamped ? -1 : 0
-
-        guard let sundownDay = calendar.date(byAdding: .day, value: offsetDays, to: startOfDate) else {
-            return formattedDay(startOfDate)
+        guard let shiftedDate = calendar.date(byAdding: .minute, value: -resetClamped, to: date) else {
+            return formattedDay(calendar.startOfDay(for: date))
         }
 
-        return formattedDay(sundownDay)
+        return formattedDay(calendar.startOfDay(for: shiftedDate))
     }
 
     private func formattedDay(_ date: Date) -> String {
